@@ -898,6 +898,15 @@ def setup_magicoder_params():
     default=False,
 )
 @click.option(
+    "--own-data",
+    "-o",
+    "own_data",
+    is_flag=True,
+    help="Perform evaluation on own dataset.",
+    default=False,
+
+)
+@click.option(
     "--models",
     "-m",
     type=str,
@@ -938,7 +947,7 @@ def main(
     Available enhancement strategy: "RAG", "COT", "FSP", or "multi-turn".
     Config file takes precedence over command line options.
     """  # FIX
-    own_data=False
+    
     if config is not None:
         samples, models = read_config_file(config)
 
