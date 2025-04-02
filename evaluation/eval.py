@@ -780,6 +780,7 @@ def OPA_Rego_evaluation(plan_file, policy_file):
     results = [
         i[-1]
         for i in dict_generator(
+            logger.info("results: {}".format(results.stdout))
             json.loads(result.stdout)["result"][0]["expressions"][0]["value"]
         )
     ]
