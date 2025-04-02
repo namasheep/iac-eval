@@ -777,10 +777,10 @@ def OPA_Rego_evaluation(plan_file, policy_file):
     # get the first key-value pair: https://stackoverflow.com/a/39292086/13336187
     # key_val = key_val[1]
     # print(key_val)
+    logger.info(f"results: {result.stdout}")
     results = [
         i[-1]
         for i in dict_generator(
-            logger.info(f"results: {result.stdout}")
             json.loads(result.stdout)["result"][0]["expressions"][0]["value"]
         )
     ]
