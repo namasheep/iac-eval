@@ -990,6 +990,8 @@ def main(
             )
         else:
             Retriever = None
+    else:
+        Retriever = None
 
     # Import dataset:
     if not quick_test:
