@@ -416,7 +416,7 @@ def read_models(
 
     # Read from evaluation dataset file:
     df = pd.read_csv(eval_filepath, header=0)
-    logger.info(eval_filepath)
+    
     for index, row in df.iterrows():
         # iterate every row
         # find specific column
@@ -435,6 +435,7 @@ def read_models(
     df.to_csv(eval_filepath, index=False, encoding="utf-8")
     df.to_csv(final_filepath, index=False, encoding="utf-8")
 
+    logger.info(eval_filepath)
     logger.info(f"Finished evaluation for {model}")
 
 
