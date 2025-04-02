@@ -193,7 +193,6 @@ def separate_answer_and_code(text, delimiters=["```hcl"]):
             return answer, code
     return answer, code
 
-
 # find each subdirectory
 def list_all_subdirectories_and_eval(
     data_dir, base_eval_dir, final_eval_dir, PROMPT_ENHANCEMENT_STRAT, Retriever
@@ -416,6 +415,9 @@ def read_models(
 
     # Read from evaluation dataset file:
     df = pd.read_csv(eval_filepath, header=0)
+    logger.info(f"Reading evaluation file {eval_filepath}")
+    #print the file contents out
+    logger.info(df)
     
     for index, row in df.iterrows():
         # iterate every row
@@ -929,7 +931,7 @@ def setup_magicoder_params():
 )
 # @click.argument("enhance_strat", nargs=1, type=str, default="")
 def main(
-    samples: int, models: List[str], config: Path, log_file: Path, enhance_strat: str, quick_test: bool
+    samples: int, models: List[str], config: Path, log_file: Path, enhance_strat: str, quick_test: bool, own_data: bool
 ):
     """
     Evaluate models.
@@ -957,27 +959,28 @@ def main(
     )
 
     # Setup environment variables:
-    set_aws_credentials()
-    set_replicate_credentials()
-    # set_huggingface_credentials()
+    if(not own_data):
+        set_aws_credentials()
+        set_replicate_credentials()
+        # set_huggingface_credentials()
 
-    if "gemini-1.0-pro" in models:
-        set_google_credentials()
+        if "gemini-1.0-pro" in models:
+            set_google_credentials()
 
-    if "gpt3.5" in models or "gpt4" in models:
-        setup_gpt_client()
+        if "gpt3.5" in models or "gpt4" in models:
+            setup_gpt_client()
 
-    if "Magicoder_S_CL_7B" in models:
-        setup_magicoder_params()
+        if "Magicoder_S_CL_7B" in models:
+            setup_magicoder_params()
 
-    # Setup retriever:
-    if "RAG" in PROMPT_ENHANCEMENT_STRAT:
-        Retriever = llama_index_retriever.Retriever(
-            stored_index="../retriever/aws-index",
-            path="../retriever/terraform-provider-aws/website/docs/r",
-        )
-    else:
-        Retriever = None
+        # Setup retriever:
+        if "RAG" in PROMPT_ENHANCEMENT_STRAT:
+            Retriever = llama_index_retriever.Retriever(
+                stored_index="../retriever/aws-index",
+                path="../retriever/terraform-provider-aws/website/docs/r",
+            )
+        else:
+            Retriever = None
 
     # Import dataset:
     if not quick_test:
