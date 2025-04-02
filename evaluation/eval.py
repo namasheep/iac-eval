@@ -773,6 +773,7 @@ def OPA_Rego_evaluation(plan_file, policy_file):
 
     # check the exit code and return the result and error message
     # success = result.returncode == 0
+    logger.info(result.returnode)
     # key_val = next(iter( json.loads(result.stdout)["result"][0]["expressions"][0]["value"].items() ))
     # get the first key-value pair: https://stackoverflow.com/a/39292086/13336187
     # key_val = key_val[1]
