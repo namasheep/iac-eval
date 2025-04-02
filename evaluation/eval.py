@@ -938,7 +938,7 @@ def main(
     Available enhancement strategy: "RAG", "COT", "FSP", or "multi-turn".
     Config file takes precedence over command line options.
     """  # FIX
-
+    own_data=False
     if config is not None:
         samples, models = read_config_file(config)
 
