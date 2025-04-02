@@ -417,7 +417,7 @@ def read_models(
     df = pd.read_csv(eval_filepath, header=0)
     logger.info(f"Reading evaluation file {eval_filepath}")
     #print the file contents out
-    logger.info(df)
+    logger.info(df.to_String())
     
     for index, row in df.iterrows():
         # iterate every row
