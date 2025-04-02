@@ -417,7 +417,13 @@ def read_models(
     df = pd.read_csv(eval_filepath, header=0)
     logger.info(f"Reading evaluation file {eval_filepath}")
     #print the file contents out
-    logger.info(df.to_string())
+    logger.info("DataFrame contents:")
+    for index, row in df.iterrows():
+        logger.info(f"\nRow {index}:")
+        for column in df.columns:
+            logger.info(f"{column}: {row[column]}")
+        logger.info("-" * 80)  # Print a separator line
+
     
     for index, row in df.iterrows():
         # iterate every row
