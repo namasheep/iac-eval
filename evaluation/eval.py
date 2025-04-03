@@ -1263,6 +1263,7 @@ def main(
     # and perform model evaluation:
 
 # Get the current working directory
+    """
     cwd = os.getcwd()
 
 # Join it with your relative path to the CSV file
@@ -1273,8 +1274,28 @@ def main(
 
     relativefile = "own-data/evaluation-dataset-for-data.csv"
     logger.info(f"own_file: {own_file}")
+    """
     if own_data:
-        list_all_subdirectories_and_eval_own_data(own_file)
+
+        # Get the current working directory
+        cwd = os.getcwd()
+
+        # Path to own-data directory
+        own_data_dir = os.path.join(cwd, "own-data")
+
+        # Loop through all files in the directory
+        for filename in os.listdir(own_data_dir):
+        # Get the full path of each file
+            file_path = os.path.join(own_data_dir, filename)
+
+            # If you only want to process CSV files, add this check
+            if filename.endswith('.csv'):
+                # Normalize the path
+                file_path = os.path.normpath(file_path)
+                print(f"Processing file: {file_path}")
+
+                #read_models_own_data(NUM_EXISTING_SAMPLES=1,eval_filepath=file_path,final_filepath=file_path)
+                list_all_subdirectories_and_eval_own_data(file_path)
     else:
         list_all_subdirectories_and_eval(
             data_dir, base_eval_dir, final_eval_dir, PROMPT_ENHANCEMENT_STRAT, Retriever
