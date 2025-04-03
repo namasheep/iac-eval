@@ -733,7 +733,7 @@ def model_evaluation_own_data(
     df.at[index, "LLM OPA match phase Error #0"] = x[
         "opa_evaluation_error"
     ]
-    df.at[index, "LLM Notes #" + str(i)] = x["notes"]
+    df.at[index, "LLM Notes #0"] = x["notes"]
     logging.info("Plan Result Summary:")
     for key, value in x.items():
         logging.info(f"{key}: {value}")
