@@ -1015,6 +1015,7 @@ def OPA_Rego_evaluation(plan_file, policy_file):
                 [
                     "opa",
                     "eval",
+                    "--v0-compatible",
                     "-i",
                     plan_file,
                     "-d",
@@ -1033,7 +1034,7 @@ def OPA_Rego_evaluation(plan_file, policy_file):
     # success = result.returncode == 0
     logger.info(result.returncode)
 
-    if(result.stdout == ""):
+    if(result.stdout == "" or result):
         opa_result = "Failure"
         opa_error = "Empty Result, failed OPA"
         return opa_result, opa_error
@@ -1042,19 +1043,44 @@ def OPA_Rego_evaluation(plan_file, policy_file):
     # get the first key-value pair: https://stackoverflow.com/a/39292086/13336187
     # key_val = key_val[1]
     # print(key_val)
+    results = []
     logger.info(f"results: {result.stdout}")
+    failed = False
+    try:
+    # First try to parse the JSON
+        parsed_json = json.loads(result.stdout)
+        
+        # Then try to access the nested structure
+        try:
+            json_value = parsed_json["result"][0]["expressions"][0]["value"]
+            results = [
+                i[-1]
+                for i in dict_generator(json_value)
+            ]
+        except (KeyError, IndexError) as e:
+            print(f"Error accessing JSON structure: {e}")
+            results = []  # or however you want to handle this case
+            
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse JSON: {e}")
+        failed = True
+        results = []  # or however you want to handle this case
+    """
     results = [
         i[-1]
         for i in dict_generator(
             json.loads(result.stdout)["result"][0]["expressions"][0]["value"]
         )
     ]
+    """
     # print(results)
     # print(key_val)
     success = False if False in results else True
     opa_result = "Success" if success else "Failure"
     opa_error = "No error"
-    if not success:
+    if failed:
+        opa_error = "OPA exception occurred: Failed to load results"
+    elif not success:
         opa_error = "Rule violation found. OPA complete output logged here: " + str(
             json.loads(result.stdout)
         )
