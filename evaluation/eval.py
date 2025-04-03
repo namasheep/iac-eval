@@ -530,6 +530,7 @@ def read_models_own_data(
     for index, row in df.iterrows():
         # iterate every row
         # find specific column
+        logger.info(f"Processing row: {index}")
         model_evaluation_own_data(
             row,
             preprompt,
@@ -751,8 +752,7 @@ def model_evaluation_own_data(
         multi_turn_count = 1
         while True:
             is_empty_code = False
-            logger.info(f"Preprompt: {preprompt}")
-            logger.info(f"Prompt: {prompt}")
+            logger.info(f"Processing Sample: {i}")
             """
             if model == "gpt4":
                 text = models.GPT4(preprompt, prompt, gpt_client)
@@ -786,8 +786,8 @@ def model_evaluation_own_data(
             if code == "":
                 logger.error("Error: Answer contains no code, skipping eval_pipeline.")
                 is_empty_code = True
-            logger.info("Answer is: {}".format(answer))
-            logger.info("Code is: {}".format(code))
+            #logger.info("Answer is: {}".format(answer))
+            #logger.info("Code is: {}".format(code))
 
             #df.at[index, "LLM Output #" + str(i)] = text
 
