@@ -778,9 +778,9 @@ def model_evaluation_own_data(
             if code == "":
                 logger.error("Error: Answer contains no code, skipping eval_pipeline.")
                 is_empty_code = True
-            logger.info("Answer is: {}".format(answer))
-            logger.info("Code is: {}".format(code))
-            logger.info(f"Model raw output: {text}")
+            #logger.info("Answer is: {}".format(answer))
+            #logger.info("Code is: {}".format(code))
+            #logger.info(f"Model raw output: {text}")
 
             answer, code = separate_answer_and_code(text, DELIMITERS)
             if code == "":
