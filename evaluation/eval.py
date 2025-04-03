@@ -700,8 +700,9 @@ def model_evaluation_own_data(
             return
 
     #prompt = prompt_enhancements(prompt, PROMPT_ENHANCEMENT_STRAT, Retriever)
+    is_empty_code = False
     logger.info(f"Prompt: {prompt}")
-
+    
     policy_file = row["Rego intent"]
     num_correct = 0
     text = df.at[index, "LLM Output #0"]
