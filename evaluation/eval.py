@@ -1223,12 +1223,12 @@ def main(
     cwd = os.getcwd()
 
 # Join it with your relative path to the CSV file
-    absolute_path = os.path.join(cwd, "evaluation", "own-data", "evaluation-dataset-for-data_with_results.csv")
+    absolute_path = os.path.join(cwd, "own-data", "evaluation-dataset-for-data_with_results.csv")
 
     # Normalize the path
     own_file = os.path.normpath(absolute_path)
 
-    relativefile = "evaluation/own-data/evaluation-dataset-for-data.csv"
+    relativefile = "own-data/evaluation-dataset-for-data.csv"
     logger.info(f"own_file: {own_file}")
     if own_data:
         list_all_subdirectories_and_eval_own_data(own_file)
