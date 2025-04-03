@@ -1,4 +1,4 @@
-Resource,Prompt,Rego intent,Difficulty,Reference output,Intent,LLM Output #0,LLM Plannable? #0,LLM Correct? #0,LLM Plan Phase Error #0,LLM OPA match phase Error #0,LLM Notes #0
+Resource,Prompt,Rego intent,Difficulty,Reference output,Intent,LLM Output #0,LLM Plannable? #0,LLM Correct? #0,LLM Plan Phase Error #0,LLM OPA match phase Error #0,LLM Notes #0,LLM Output #1,LLM Plannable? #1,LLM Correct? #1,LLM Plan Phase Error #1,LLM OPA match phase Error #1,LLM Notes #1,LLM Output #2,LLM Plannable? #2,LLM Correct? #2,LLM Plan Phase Error #2,LLM OPA match phase Error #2,LLM Notes #2
 "aws_cloudwatch_log_group, aws_cloudwatch_log_resource_policy, aws_route53_query_log, aws_route53_zone, aws_iam_policy_document","Configure a query log that can create a log stream and put log events using Route 53 resources. Name the zone ""primary"", the cloudwatch log group ""aws_route53_example_com"", and the cloudwatch log resource policy ""route53-query-logging-policy""","package terraform.validation
 
 default is_configuration_valid = false
@@ -105,6 +105,142 @@ Has one ""aws_route53_query_log"" resource
     with ""cloudwatch_log_group_arn"" referencing the ""aws_cloudwatch_log_group"" resource
     with ""zone_id"" referencing the ""aws_route53_zone"" resource
     and depends on the ""aws_cloudwatch_log_resource_policy"" resource","I'll help you create a Terraform configuration for Route 53 query logging with the specified requirements. Here's the solution:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 5.0""
+    }
+  }
+}
+
+provider ""aws"" {
+  region = ""us-east-1""
+}
+
+# Create Route 53 hosted zone
+resource ""aws_route53_zone"" ""primary"" {
+  name = ""example.com""
+}
+
+# Create CloudWatch log group
+resource ""aws_cloudwatch_log_group"" ""aws_route53_example_com"" {
+  name              = ""/aws/route53/${aws_route53_zone.primary.name}""
+  retention_in_days = 30
+}
+
+# Create IAM policy document for Route 53 query logging
+data ""aws_iam_policy_document"" ""route53-query-logging-policy"" {
+  statement {
+    actions = [
+      ""logs:CreateLogStream"",
+      ""logs:PutLogEvents""
+    ]
+
+    resources = [""arn:aws:logs:*:*:log-group:/aws/route53/*""]
+
+    principals {
+      identifiers = [""route53.amazonaws.com""]
+      type        = ""Service""
+    }
+  }
+}
+
+# Create CloudWatch log resource policy
+resource ""aws_cloudwatch_log_resource_policy"" ""route53-query-logging-policy"" {
+  policy_document = data.aws_iam_policy_document.route53-query-logging-policy.json
+  policy_name     = ""route53-query-logging-policy""
+}
+
+# Create Route 53 query log
+resource ""aws_route53_query_log"" ""example_com"" {
+  depends_on = [aws_cloudwatch_log_resource_policy.route53-query-logging-policy]
+
+  cloudwatch_log_group_arn = aws_cloudwatch_log_group.aws_route53_example_com.arn
+  zone_id                  = aws_route53_zone.primary.zone_id
+}
+```
+
+This configuration:
+
+1. Sets up the required AWS provider
+2. Creates a Route 53 hosted zone named ""primary""
+3. Creates a CloudWatch log group named ""aws_route53_example_com""
+4. Creates an IAM policy document that allows Route 53 to create log streams and put log events
+5. Creates a CloudWatch log resource policy named ""route53-query-logging-policy""
+6. Sets up Route 53 query logging with the necessary dependencies
+
+The `depends_on` attribute ensures that the log resource policy is created before attempting to set up the query log. The configuration allows Route 53 to write logs to CloudWatch Log Groups under the /aws/route53/* path.",,,,,,"I'll help you create a Terraform configuration for Route 53 query logging with the specified requirements. Here's the solution:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 5.75""
+    }
+  }
+}
+
+provider ""aws"" {
+  region = ""us-east-1""
+}
+
+# Create Route 53 hosted zone
+resource ""aws_route53_zone"" ""primary"" {
+  name = ""example.com""
+}
+
+# Create CloudWatch log group
+resource ""aws_cloudwatch_log_group"" ""aws_route53_example_com"" {
+  name              = ""/aws/route53/${aws_route53_zone.primary.name}""
+  retention_in_days = 30
+}
+
+# Create IAM policy document for Route 53 query logging
+data ""aws_iam_policy_document"" ""route53-query-logging-policy"" {
+  statement {
+    actions = [
+      ""logs:CreateLogStream"",
+      ""logs:PutLogEvents""
+    ]
+
+    resources = [""arn:aws:logs:*:*:log-group:/aws/route53/*""]
+
+    principals {
+      identifiers = [""route53.amazonaws.com""]
+      type        = ""Service""
+    }
+  }
+}
+
+# Create CloudWatch log resource policy
+resource ""aws_cloudwatch_log_resource_policy"" ""route53-query-logging-policy"" {
+  policy_document = data.aws_iam_policy_document.route53-query-logging-policy.json
+  policy_name     = ""route53-query-logging-policy""
+}
+
+# Create Route 53 query log
+resource ""aws_route53_query_log"" ""example_com"" {
+  depends_on = [aws_cloudwatch_log_resource_policy.route53-query-logging-policy]
+
+  cloudwatch_log_group_arn = aws_cloudwatch_log_group.aws_route53_example_com.arn
+  zone_id                  = aws_route53_zone.primary.zone_id
+}
+```
+
+This configuration:
+
+1. Sets up the AWS provider and required provider versions
+2. Creates a Route 53 hosted zone named ""primary""
+3. Creates a CloudWatch log group named ""aws_route53_example_com""
+4. Defines an IAM policy document that allows Route 53 to create log streams and put log events
+5. Creates a CloudWatch log resource policy named ""route53-query-logging-policy""
+6. Sets up Route 53 query logging with the necessary permissions and dependencies
+
+The `depends_on` attribute ensures that the log resource policy is created before attempting to set up the query log. The configuration will create all necessary resources to enable Route 53 query logging with the specified names and permissions.",,,,,,"I'll help you create a Terraform configuration for Route 53 query logging with the specified requirements. Here's the solution:
 
 ```hcl
 terraform {
@@ -278,7 +414,78 @@ Has one ""aws_route53_vpc_association_authorization"" resource
 
 Has one ""aws_route53_zone_association"" resource
     with ""vpc_id"" referencing the ""aws_route53_vpc_association_authorization"" resource 
-    with ""zone_id"" referencing the ""aws_route53_vpc_association_authorization"" resource","I'll help you create a Terraform configuration for a Route 53 zone association resource. This configuration will allow you to associate a Route 53 private hosted zone with a VPC.
+    with ""zone_id"" referencing the ""aws_route53_vpc_association_authorization"" resource","I'll help you create a Terraform configuration for a Route 53 zone association resource. This configuration will set up a private hosted zone and associate it with a VPC.
+
+```hcl
+# Configure AWS Provider
+provider ""aws"" {
+  region = ""us-east-1""
+}
+
+# Create a VPC
+resource ""aws_vpc"" ""main"" {
+  cidr_block           = ""10.0.0.0/16""
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  
+  tags = {
+    Name = ""main-vpc""
+  }
+}
+
+# Create a Route 53 private hosted zone
+resource ""aws_route53_zone"" ""private"" {
+  name = ""example.internal""
+  
+  vpc {
+    vpc_id = aws_vpc.main.id
+  }
+  
+  tags = {
+    Environment = ""private""
+  }
+}
+
+# Create a secondary VPC
+resource ""aws_vpc"" ""secondary"" {
+  cidr_block           = ""172.16.0.0/16""
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  
+  tags = {
+    Name = ""secondary-vpc""
+  }
+}
+
+# Authorize VPC association
+resource ""aws_route53_vpc_association_authorization"" ""secondary"" {
+  vpc_id  = aws_vpc.secondary.id
+  zone_id = aws_route53_zone.private.id
+}
+
+# Create the zone association
+resource ""aws_route53_zone_association"" ""secondary"" {
+  vpc_id  = aws_route53_vpc_association_authorization.secondary.vpc_id
+  zone_id = aws_route53_vpc_association_authorization.secondary.zone_id
+}
+```
+
+This configuration:
+
+1. Sets up the AWS provider for us-east-1 region
+2. Creates a main VPC with DNS support enabled
+3. Creates a Route 53 private hosted zone associated with the main VPC
+4. Creates a secondary VPC
+5. Authorizes the association between the private hosted zone and the secondary VPC
+6. Creates the actual zone association between the private hosted zone and the secondary VPC
+
+Key points:
+- The VPCs have DNS hostnames and DNS support enabled
+- The private hosted zone is created with an initial VPC association
+- The additional VPC association requires both authorization and association resources
+- All resources include relevant tags for better organization
+
+You can customize the CIDR blocks, zone name, and tags according to your specific requirements.",,,,,,"I'll help you create a Terraform configuration for a valid Route 53 zone association resource. Based on the provided example and best practices, here's the solution:
 
 ```hcl
 # Configure AWS Provider
@@ -287,13 +494,71 @@ provider ""aws"" {
 }
 
 # Create primary VPC
-resource ""aws_vpc"" ""main"" {
+resource ""aws_vpc"" ""primary"" {
+  cidr_block           = ""10.0.0.0/16""
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+}
+
+# Create Route 53 Private Hosted Zone
+resource ""aws_route53_zone"" ""private"" {
+  name = ""example.internal""
+
+  vpc {
+    vpc_id = aws_vpc.primary.id
+  }
+}
+
+# Create secondary VPC
+resource ""aws_vpc"" ""secondary"" {
+  cidr_block           = ""10.1.0.0/16""
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+}
+
+# Create VPC association authorization
+resource ""aws_route53_vpc_association_authorization"" ""auth"" {
+  vpc_id  = aws_vpc.secondary.id
+  zone_id = aws_route53_zone.private.id
+}
+
+# Create Route 53 zone association
+resource ""aws_route53_zone_association"" ""secondary"" {
+  vpc_id  = aws_route53_vpc_association_authorization.auth.vpc_id
+  zone_id = aws_route53_vpc_association_authorization.auth.zone_id
+}
+```
+
+This configuration:
+
+1. Sets up the AWS provider for the us-east-1 region
+2. Creates a primary VPC with DNS support enabled
+3. Creates a private Route 53 hosted zone associated with the primary VPC
+4. Creates a secondary VPC
+5. Creates an association authorization for the secondary VPC
+6. Creates the actual zone association using the authorization
+
+The configuration allows you to associate a Route 53 private hosted zone with multiple VPCs, which is a common requirement for internal DNS resolution across multiple VPCs in AWS.
+
+Important notes:
+- Both VPCs must have DNS hostnames and DNS support enabled
+- The hosted zone is private (internal) as indicated by the VPC configuration
+- The association authorization is required when associating a hosted zone with a VPC in a different AWS account",,,,,,"I'll help you create a Terraform configuration for a Route 53 zone association resource. This configuration will create a private hosted zone and associate it with a VPC.
+
+```hcl
+# Configure AWS Provider
+provider ""aws"" {
+  region = ""us-east-1""
+}
+
+# Create primary VPC
+resource ""aws_vpc"" ""primary"" {
   cidr_block           = ""10.0.0.0/16""
   enable_dns_hostnames = true
   enable_dns_support   = true
 
   tags = {
-    Name = ""main-vpc""
+    Name = ""primary-vpc""
   }
 }
 
@@ -301,8 +566,9 @@ resource ""aws_vpc"" ""main"" {
 resource ""aws_route53_zone"" ""private"" {
   name = ""example.internal""
 
+  # Associate the zone with the primary VPC
   vpc {
-    vpc_id = aws_vpc.main.id
+    vpc_id = aws_vpc.primary.id
   }
 
   tags = {
@@ -312,7 +578,7 @@ resource ""aws_route53_zone"" ""private"" {
 
 # Create secondary VPC
 resource ""aws_vpc"" ""secondary"" {
-  cidr_block           = ""172.16.0.0/16""
+  cidr_block           = ""10.1.0.0/16""
   enable_dns_hostnames = true
   enable_dns_support   = true
 
@@ -327,7 +593,7 @@ resource ""aws_route53_vpc_association_authorization"" ""secondary"" {
   zone_id = aws_route53_zone.private.id
 }
 
-# Create Route 53 zone association
+# Create zone association with the secondary VPC
 resource ""aws_route53_zone_association"" ""secondary"" {
   vpc_id  = aws_route53_vpc_association_authorization.secondary.vpc_id
   zone_id = aws_route53_vpc_association_authorization.secondary.zone_id
@@ -336,16 +602,16 @@ resource ""aws_route53_zone_association"" ""secondary"" {
 
 This configuration:
 
-1. Sets up the AWS provider for us-east-1 region
+1. Sets up the AWS provider for the us-east-1 region
 2. Creates a primary VPC with DNS support enabled
-3. Creates a Route 53 private hosted zone associated with the primary VPC
+3. Creates a private Route 53 hosted zone and associates it with the primary VPC
 4. Creates a secondary VPC
 5. Creates an association authorization for the secondary VPC
-6. Creates the actual zone association between the private hosted zone and the secondary VPC
+6. Creates the actual zone association with the secondary VPC
 
-The configuration enables DNS resolution between both VPCs using the private hosted zone. Make sure to:
-- Enable DNS hostnames and DNS support in both VPCs
-- Use appropriate CIDR blocks that don't overlap
-- Create the association authorization before the actual association
+The configuration allows you to:
+- Host private DNS records in the hosted zone
+- Resolve DNS queries from both VPCs
+- Maintain private DNS resolution within your VPC network
 
-You can customize the CIDR blocks, zone name, and tags according to your needs.",,,,,
+Make sure to replace ""example.internal"" with your desired domain name and adjust the CIDR blocks according to your network design requirements.",,,,,

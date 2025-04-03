@@ -700,6 +700,8 @@ def model_evaluation_own_data(
             return
 
     #prompt = prompt_enhancements(prompt, PROMPT_ENHANCEMENT_STRAT, Retriever)
+
+    """
     is_empty_code = False
     logger.info(f"Prompt: {prompt}")
     
@@ -741,12 +743,17 @@ def model_evaluation_own_data(
     if x["opa_evaluation_result"] == "success":
         num_correct += 1
     """
-    for i in range(NUM_EXISTING_SAMPLES, NUM_SAMPLES_PER_TASK):
+    policy_file = row["Rego intent"]
+    num_correct = 0
+    logger.info(f"Begin testing model: ")
+
+    for i in range(NUM_SAMPLES_PER_TASK):
         multi_turn_count = 1
         while True:
             is_empty_code = False
             logger.info(f"Preprompt: {preprompt}")
             logger.info(f"Prompt: {prompt}")
+            """
             if model == "gpt4":
                 text = models.GPT4(preprompt, prompt, gpt_client)
             elif model == "gpt3.5":
@@ -765,7 +772,7 @@ def model_evaluation_own_data(
                 text = models.Wizardcoder33b(preprompt, prompt)
             elif model == "Wizardcoder34b":
                 text = models.Wizardcoder34b(preprompt, prompt)
-            
+            """
             text = df.at[index, "LLM Output #" + str(i)]
             answer, code = separate_answer_and_code(text, DELIMITERS)
             if code == "":
@@ -801,8 +808,8 @@ def model_evaluation_own_data(
 
             if x["opa_evaluation_result"] == "success":
                 num_correct += 1
-            break
-            
+                break
+            """
             elif PROMPT_ENHANCEMENT_STRAT == "multi-turn":
                 if multi_turn_count == 2:  # only do 2 turns
                     break
