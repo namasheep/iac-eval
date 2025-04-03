@@ -192,7 +192,55 @@ def separate_answer_and_code(text, delimiters=["```hcl"]):
         if code != "":
             return answer, code
     return answer, code
-
+def list_all_subdirectories_and_eval(
+    data_dir, base_eval_dir, final_eval_dir, PROMPT_ENHANCEMENT_STRAT, Retriever
+):
+    for path, _, _ in os.walk(data_dir):
+        subdir = path.removeprefix(
+            data_dir + "/"
+        )  # FIX?: temp fix for now, the way to go is prob using pathlib
+        create_evaluation_directories(subdir, base_eval_dir=base_eval_dir, final_eval_dir=final_eval_dir)
+        file_dir = os.listdir(path)
+        for file in file_dir:
+            if file.endswith(".csv"):
+                file_path = os.path.abspath(os.path.join(path, file))
+                print(file_path)
+                # Perform evaluation:
+                for model in EVAL_MODELS:
+                    # Note: Do not overwrite existing files, and do not evaluate if file exists already
+                    eval_filepath, final_file_path, file_exists, NUM_EXISTING_SAMPLES = (
+                        copy_csv_to_evaluation(
+                            file_path,
+                            subdir,
+                            model,
+                            PROMPT_ENHANCEMENT_STRAT,
+                            base_eval_dir=base_eval_dir,
+                            final_eval_dir=final_eval_dir,
+                        )
+                    )
+                    if file_exists:
+                        continue
+                    read_models(
+                        model,
+                        PROMPT_ENHANCEMENT_STRAT,
+                        NUM_EXISTING_SAMPLES,
+                        eval_filepath,
+                        final_file_path,
+                        Retriever,
+                    )
+def list_all_subdirectories_and_eval_own_data(
+    filePath
+):
+    #chek if file exists
+    if not os.path.exists(filePath):
+        print("File does not exist")
+        return
+    
+    read_models_own_data(
+        NUM_EXISTING_SAMPLES=1,
+        eval_filepath=filePath,
+        final_filepath=filePath,
+    )
 # find each subdirectory
 def list_all_subdirectories_and_eval(
     data_dir, base_eval_dir, final_eval_dir, PROMPT_ENHANCEMENT_STRAT, Retriever
@@ -418,12 +466,16 @@ def read_models(
     logger.info(f"Reading evaluation file {eval_filepath}")
     #print the file contents out
     logger.info("DataFrame contents:")
+
+    #printing data format
+    """
     for index, row in df.iterrows():
         logger.info(f"\nRow {index}:")
         for column in df.columns:
             logger.info(f"{column}: {row[column]}")
         logger.info("-" * 80)  # Print a separator line
-
+    """
+    
     
     for index, row in df.iterrows():
         # iterate every row
@@ -445,6 +497,52 @@ def read_models(
 
     logger.info(eval_filepath)
     logger.info(f"Finished evaluation for {model}")
+
+def read_models_own_data(
+    NUM_EXISTING_SAMPLES,
+    eval_filepath,
+    final_filepath
+):
+    # read the first four lines to determine the header
+
+    uuid_1 = get_unique_uuid()
+
+    with open("prompt-templates/system-prompt.txt", "r") as file2:
+        preprompt = file2.read()
+
+    # Read from evaluation dataset file:
+    df = pd.read_csv(eval_filepath, header=0)
+    logger.info(f"Reading evaluation file {eval_filepath}")
+    #print the file contents out
+    logger.info("DataFrame contents:")
+
+    #printing data format
+    """
+    for index, row in df.iterrows():
+        logger.info(f"\nRow {index}:")
+        for column in df.columns:
+            logger.info(f"{column}: {row[column]}")
+        logger.info("-" * 80)  # Print a separator line
+    """
+    
+    
+    for index, row in df.iterrows():
+        # iterate every row
+        # find specific column
+        model_evaluation_own_data(
+            row,
+            preprompt,
+            df,
+            index,
+            NUM_EXISTING_SAMPLES,
+            uuid_1
+        )
+
+    df.to_csv(eval_filepath, index=False, encoding="utf-8")
+    #df.to_csv(final_filepath, index=False, encoding="utf-8")
+
+    logger.info(eval_filepath)
+    logger.info(f"Finished evaluation for {eval_filepath}")
 
 
 def get_plan_result_template():
@@ -581,6 +679,111 @@ def model_evaluation(
                 continue
             else:
                 break
+
+def model_evaluation_own_data(
+    row,
+    preprompt,
+    df,
+    index,
+    NUM_EXISTING_SAMPLES,
+    uuid_1,
+):
+    """
+    Note: Multi-turn implies 2 turns only
+    """
+    prompt = row["Prompt"]
+
+    # Skip empty rows
+    if isinstance(row["Prompt"], float):
+        if math.isnan(row["Prompt"]):
+            return
+
+    #prompt = prompt_enhancements(prompt, PROMPT_ENHANCEMENT_STRAT, Retriever)
+    logger.info(f"Prompt: {prompt}")
+
+    policy_file = row["Rego intent"]
+    num_correct = 0
+    for i in range(NUM_EXISTING_SAMPLES, NUM_SAMPLES_PER_TASK):
+        multi_turn_count = 1
+        while True:
+            is_empty_code = False
+            logger.info(f"Preprompt: {preprompt}")
+            logger.info(f"Prompt: {prompt}")
+            """
+            if model == "gpt4":
+                text = models.GPT4(preprompt, prompt, gpt_client)
+            elif model == "gpt3.5":
+                text = models.GPT3_5(preprompt, prompt, gpt_client)
+            elif model == "gemini-1.0-pro":
+                text = models.gemini(preprompt, prompt)
+            elif model == "codellama-13b":
+                text = models.Codellama13b(preprompt, prompt)
+            elif model == "codellama-7b":
+                text = models.Codellama7b(preprompt, prompt)
+            elif model == "codellama-34b":
+                text = models.Codellama34b(preprompt, prompt)
+            elif model == "Magicoder_S_CL_7B":
+                text = models.Magicoder_S_CL_7B(preprompt, prompt)
+            elif model == "Wizardcoder33b":
+                text = models.Wizardcoder33b(preprompt, prompt)
+            elif model == "Wizardcoder34b":
+                text = models.Wizardcoder34b(preprompt, prompt)
+            """
+            text = df.at[index, "LLM Output #" + str(i)]
+            answer, code = separate_answer_and_code(text, DELIMITERS)
+            if code == "":
+                logger.error("Error: Answer contains no code, skipping eval_pipeline.")
+                is_empty_code = True
+            logger.info("Answer is: {}".format(answer))
+            logger.info("Code is: {}".format(code))
+            logger.info(f"Model raw output: {text}")
+
+            answer, code = separate_answer_and_code(text, DELIMITERS)
+            if code == "":
+                logger.error("Error: Answer contains no code, skipping eval_pipeline.")
+                is_empty_code = True
+            logger.info("Answer is: {}".format(answer))
+            logger.info("Code is: {}".format(code))
+
+            #df.at[index, "LLM Output #" + str(i)] = text
+
+            if is_empty_code:
+                x = empty_code_error()
+            else:
+                x = eval_pipeline(code, policy_file, prompt, uuid_1)
+            df.at[index, "LLM Plannable? #" + str(i)] = x["terraform_plan_success"]
+            df.at[index, "LLM Correct? #" + str(i)] = x["opa_evaluation_result"]
+            df.at[index, "LLM Plan Phase Error #" + str(i)] = x["terraform_plan_error"]
+            df.at[index, "LLM OPA match phase Error #" + str(i)] = x[
+                "opa_evaluation_error"
+            ]
+            df.at[index, "LLM Notes #" + str(i)] = x["notes"]
+            logging.info("Plan Result Summary:")
+            for key, value in x.items():
+                logging.info(f"{key}: {value}")
+
+            if x["opa_evaluation_result"] == "success":
+                num_correct += 1
+            break
+            """
+            elif PROMPT_ENHANCEMENT_STRAT == "multi-turn":
+                if multi_turn_count == 2:  # only do 2 turns
+                    break
+                multi_turn_count += 1
+                if code == "":
+                    continue
+                preprompt = prompt_templates.multi_turn_system_prompt()
+                if not x["terraform_plan_success"]:
+                    prompt = prompt_templates.multi_turn_plan_error_prompt(
+                        row["Prompt"], code, x["terraform_plan_error"]
+                    )
+                elif x["opa_evaluation_result"] == "Failure":
+                    prompt = prompt_templates.multi_turn_rego_error_prompt(
+                        row["Prompt"], code, policy_file, x["opa_evaluation_error"]
+                    )
+                continue
+            """
+            
 
 
 # used to modify main.tf
@@ -913,6 +1116,14 @@ def setup_magicoder_params():
 
 )
 @click.option(
+    "--own-file",
+    "-d",
+    "own_file",
+    type=click.Path(path_type=Path, exists=True),
+    help="Path to own dataset file.",
+    default=None
+)
+@click.option(
     "--models",
     "-m",
     type=str,
@@ -946,7 +1157,7 @@ def setup_magicoder_params():
 )
 # @click.argument("enhance_strat", nargs=1, type=str, default="")
 def main(
-    samples: int, models: List[str], config: Path, log_file: Path, enhance_strat: str, quick_test: bool, own_data: bool
+    samples: int, models: List[str], config: Path, log_file: Path, enhance_strat: str, quick_test: bool, own_data: bool, own_file: Path
 ):
     """
     Evaluate models.
@@ -1014,6 +1225,8 @@ def main(
     final_eval_dir = os.path.join(data_dir, "..", "evaluation/results")
     # Create evaluation directories for each data directory
     # and perform model evaluation:
+    if own_data:
+        list_all_subdirectories_and_eval_own_data(own_file)
     list_all_subdirectories_and_eval(
         data_dir, base_eval_dir, final_eval_dir, PROMPT_ENHANCEMENT_STRAT, Retriever
     )
