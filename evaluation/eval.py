@@ -994,6 +994,7 @@ def OPA_Rego_evaluation(plan_file, policy_file):
         is_rego_v1 = check_if_rego_v1(policy_file)
 
         if is_rego_v1:
+            logger.debug("V1")
             result = subprocess.run(
                 [
                     "opa",
@@ -1009,6 +1010,7 @@ def OPA_Rego_evaluation(plan_file, policy_file):
                 text=True,
             )
         else:
+            logger.debug("NOT V1")
             result = subprocess.run(
                 [
                     "opa",
@@ -1033,9 +1035,7 @@ def OPA_Rego_evaluation(plan_file, policy_file):
 
     if(result.stdout == ""):
         opa_result = "Failure"
-        opa_error = "Rule violation found. OPA complete output logged here: " + str(
-            json.loads(result.stdout)
-        )
+        opa_error = "Empty Result, failed OPA"
         return opa_result, opa_error
 
     # key_val = next(iter( json.loads(result.stdout)["result"][0]["expressions"][0]["value"].items() ))
