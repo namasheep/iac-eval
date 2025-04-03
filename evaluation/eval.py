@@ -1237,6 +1237,7 @@ def main(
     own_file = os.path.normpath(absolute_path)
 
     relativefile = "evaluation/own-data/evaluation-dataset-for-data.csv"
+    logger.info(f"own_file: {own_file}")
     if own_data:
         list_all_subdirectories_and_eval_own_data(own_file)
     else:
