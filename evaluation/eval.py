@@ -1228,9 +1228,10 @@ def main(
     # and perform model evaluation:
     if own_data:
         list_all_subdirectories_and_eval_own_data(own_file)
-    list_all_subdirectories_and_eval(
-        data_dir, base_eval_dir, final_eval_dir, PROMPT_ENHANCEMENT_STRAT, Retriever
-    )
+    else:
+        list_all_subdirectories_and_eval(
+            data_dir, base_eval_dir, final_eval_dir, PROMPT_ENHANCEMENT_STRAT, Retriever
+        )
 
 
 if __name__ == "__main__":
