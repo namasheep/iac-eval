@@ -1117,14 +1117,6 @@ def setup_magicoder_params():
 
 )
 @click.option(
-    "--own-file",
-    "-d",
-    "own_file",
-    type=click.Path(path_type=Path, exists=True),
-    help="Path to own dataset file.",
-    default=None
-)
-@click.option(
     "--models",
     "-m",
     type=str,
@@ -1158,7 +1150,7 @@ def setup_magicoder_params():
 )
 # @click.argument("enhance_strat", nargs=1, type=str, default="")
 def main(
-    samples: int, models: List[str], config: Path, log_file: Path, enhance_strat: str, quick_test: bool, own_data: bool, own_file: Path
+    samples: int, models: List[str], config: Path, log_file: Path, enhance_strat: str, quick_test: bool, own_data: bool
 ):
     """
     Evaluate models.
