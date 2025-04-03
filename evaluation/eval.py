@@ -704,13 +704,48 @@ def model_evaluation_own_data(
 
     policy_file = row["Rego intent"]
     num_correct = 0
+    text = df.at[index, "LLM Output #0"]
+    answer, code = separate_answer_and_code(text, DELIMITERS)
+    if code == "":
+        logger.error("Error: Answer contains no code, skipping eval_pipeline.")
+        is_empty_code = True
+    logger.info("Answer is: {}".format(answer))
+    logger.info("Code is: {}".format(code))
+    logger.info(f"Model raw output: {text}")
+
+    answer, code = separate_answer_and_code(text, DELIMITERS)
+    if code == "":
+        logger.error("Error: Answer contains no code, skipping eval_pipeline.")
+        is_empty_code = True
+    logger.info("Answer is: {}".format(answer))
+    logger.info("Code is: {}".format(code))
+
+    #df.at[index, "LLM Output #" + str(i)] = text
+
+    if is_empty_code:
+        x = empty_code_error()
+    else:
+        x = eval_pipeline(code, policy_file, prompt, uuid_1)
+    df.at[index, "LLM Plannable? #"] = x["terraform_plan_success"]
+    df.at[index, "LLM Correct? #0"] = x["opa_evaluation_result"]
+    df.at[index, "LLM Plan Phase Error #0"] = x["terraform_plan_error"]
+    df.at[index, "LLM OPA match phase Error #0"] = x[
+        "opa_evaluation_error"
+    ]
+    df.at[index, "LLM Notes #" + str(i)] = x["notes"]
+    logging.info("Plan Result Summary:")
+    for key, value in x.items():
+        logging.info(f"{key}: {value}")
+
+    if x["opa_evaluation_result"] == "success":
+        num_correct += 1
+    """
     for i in range(NUM_EXISTING_SAMPLES, NUM_SAMPLES_PER_TASK):
         multi_turn_count = 1
         while True:
             is_empty_code = False
             logger.info(f"Preprompt: {preprompt}")
             logger.info(f"Prompt: {prompt}")
-            """
             if model == "gpt4":
                 text = models.GPT4(preprompt, prompt, gpt_client)
             elif model == "gpt3.5":
@@ -729,7 +764,7 @@ def model_evaluation_own_data(
                 text = models.Wizardcoder33b(preprompt, prompt)
             elif model == "Wizardcoder34b":
                 text = models.Wizardcoder34b(preprompt, prompt)
-            """
+            
             text = df.at[index, "LLM Output #" + str(i)]
             answer, code = separate_answer_and_code(text, DELIMITERS)
             if code == "":
@@ -766,7 +801,7 @@ def model_evaluation_own_data(
             if x["opa_evaluation_result"] == "success":
                 num_correct += 1
             break
-            """
+            
             elif PROMPT_ENHANCEMENT_STRAT == "multi-turn":
                 if multi_turn_count == 2:  # only do 2 turns
                     break
