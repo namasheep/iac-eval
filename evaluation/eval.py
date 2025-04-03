@@ -808,7 +808,7 @@ def model_evaluation_own_data(
 
             if x["opa_evaluation_result"] == "success":
                 num_correct += 1
-                break
+            break
             """
             elif PROMPT_ENHANCEMENT_STRAT == "multi-turn":
                 if multi_turn_count == 2:  # only do 2 turns
