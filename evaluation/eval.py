@@ -1059,6 +1059,7 @@ def OPA_Rego_evaluation(plan_file, policy_file):
             ]
         except (KeyError, IndexError) as e:
             print(f"Error accessing JSON structure: {e}")
+            failed = True
             results = []  # or however you want to handle this case
             
     except json.JSONDecodeError as e:
