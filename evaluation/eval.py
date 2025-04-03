@@ -1030,6 +1030,14 @@ def OPA_Rego_evaluation(plan_file, policy_file):
     # check the exit code and return the result and error message
     # success = result.returncode == 0
     logger.info(result.returncode)
+
+    if(result.stdout == ""):
+        opa_result = "Failure"
+        opa_error = "Rule violation found. OPA complete output logged here: " + str(
+            json.loads(result.stdout)
+        )
+        return opa_result, opa_error
+
     # key_val = next(iter( json.loads(result.stdout)["result"][0]["expressions"][0]["value"].items() ))
     # get the first key-value pair: https://stackoverflow.com/a/39292086/13336187
     # key_val = key_val[1]
