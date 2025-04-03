@@ -231,6 +231,7 @@ def list_all_subdirectories_and_eval(
 def list_all_subdirectories_and_eval_own_data(
     filePath
 ):
+    logger.info("Evaluating own data")
     #chek if file exists
     if not os.path.exists(filePath):
         print("File does not exist")
