@@ -794,6 +794,7 @@ def model_evaluation_own_data(
             if is_empty_code:
                 x = empty_code_error()
             else:
+                logger.debug(code)
                 x = eval_pipeline(code, policy_file, prompt, uuid_1)
             df.at[index, "LLM Plannable? #" + str(i)] = x["terraform_plan_success"]
             df.at[index, "LLM Correct? #" + str(i)] = x["opa_evaluation_result"]
@@ -944,13 +945,19 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
 
     result_returned = False
     # generate Terraform plan with the -no-color flag
+
+    #print plan_file
+    logger.debug(f"Plan file to be created: {plan_file}")
+    logger.debug(f"Current directory: {terraform_directory}")
+    logger.debug(f"Prompt being processed: {prompt}")
+
     for i in range(2):  # try twice
         try:
             result = subprocess.run(
                 ["terraform", "plan", "-out", plan_file, "-no-color"],
                 capture_output=True,
                 text=True,
-                 # 5 minutes timeout (assume failed if timeout)
+                timeout = 300 # 5 minutes timeout (assume failed if timeout)
             )
             if "Inconsistent dependency lock file" in result.stderr:
                 subprocess.run(["terraform", "init"], capture_output=True, text=True)
