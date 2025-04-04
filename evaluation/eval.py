@@ -939,7 +939,7 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
     # change to the Terraform directory
     os.chdir(terraform_directory)
     # run init before plan
-    subprocess.run(["terraform", "init"], capture_output=True, text=True)
+    
 
     # run 'terraform plan'
     # result = subprocess.run(["terraform", "plan"], capture_output=True, text=True)
@@ -953,6 +953,8 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
     logger.debug(f"Prompt being processed: {prompt}")
 
     for i in range(2):  # try twice
+        subprocess.run(["terraform", "init"], capture_output=True, text=True)
+        time.sleep(10)
         try:
             result = subprocess.run(
                 ["terraform", "plan", "-out", plan_file, "-no-color"],
