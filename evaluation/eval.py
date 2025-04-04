@@ -955,7 +955,7 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
     subprocess.run(["terraform", "init"], capture_output=True, text=True)
     logger.debug("Terraform init completed")
     logger.debug("Running terraform plan")
-    result = subprocess.run(["terraform", "plan", plan_file, "-no-color"], capture_output=True, text=True, timeout=300)
+    result = subprocess.run(["terraform", "plan", "-out", plan_file, "-no-color"], capture_output=True, text=True, timeout=300)
     """
     for i in range(2):  # try twice
         
