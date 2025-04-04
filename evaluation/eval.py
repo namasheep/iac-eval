@@ -972,7 +972,7 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
             logging.error(
                 'Error occurred for prompt "{}": {}'.format(prompt, e), exc_info=True
             )
-    logger.debug("TERRAFORM RESULT:" + result)
+    logger.debug(f"TERRAFORM RESULT: {result}")
     # Return to parent directory
     os.chdir(cur_dir)
 
