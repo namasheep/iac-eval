@@ -1,0 +1,949 @@
+Resource,Prompt,Rego intent,Difficulty,Reference output,Intent,LLM Output #0,LLM Plannable? #0,LLM Correct? #0,LLM Plan Phase Error #0,LLM OPA match phase Error #0,LLM Notes #0,LLM Output #1,LLM Plannable? #1,LLM Correct? #1,LLM Plan Phase Error #1,LLM OPA match phase Error #1,LLM Notes #1,LLM Output #2,LLM Plannable? #2,LLM Correct? #2,LLM Plan Phase Error #2,LLM OPA match phase Error #2,LLM Notes #2
+"aws_lightsail_disk, aws_lightsail_disk, aws_lightsail_disk_attachment, aws_lightsail_disk_attachment, aws_lightsail_instance, aws_availability_zones",Create a Lightsail instance with multiple attached disks,"package terraform.validation
+
+default has_valid_resources = false
+
+# Rule for multiple aws_lightsail_disk resources
+has_valid_lightsail_disks {
+    count([disk | disk := input.planned_values.root_module.resources[_]; disk.type == ""aws_lightsail_disk""; disk.values.name; disk.values.size_in_gb; disk.values.availability_zone]) > 0
+}
+
+# Rule for multiple aws_lightsail_disk_attachment resources
+has_valid_lightsail_disk_attachments {
+    count([attachment | attachment := input.planned_values.root_module.resources[_]; attachment.type == ""aws_lightsail_disk_attachment""; attachment.values.disk_name; attachment.values.instance_name; attachment.values.disk_path]) > 0
+}
+
+# Rule for aws_lightsail_instance resource with specific arguments
+has_valid_lightsail_instance {
+    some i
+    resource := input.planned_values.root_module.resources[i]
+    resource.type == ""aws_lightsail_instance""
+    resource.values.name
+    resource.values.availability_zone
+    resource.values.blueprint_id
+    resource.values.bundle_id
+}
+
+# Combined rule to ensure all conditions are met
+has_valid_resources {
+    has_valid_lightsail_disks
+    has_valid_lightsail_disk_attachments
+    has_valid_lightsail_instance
+}",4,"terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 5.75""
+    }
+  }
+
+  required_version = ""~> 1.9.8""
+}
+
+provider ""aws"" {
+  region = ""us-east-1""
+  profile = ""admin-1""
+
+  assume_role {
+    role_arn = ""arn:aws:iam::590184057477:role/yicun-iac""
+  }
+}
+
+data ""aws_availability_zones"" ""available"" {
+  state = ""available""
+
+  filter {
+    name   = ""opt-in-status""
+    values = [""opt-in-not-required""]
+  }
+}
+
+resource ""aws_lightsail_disk"" ""test1"" {
+  name              = ""test-disk-1""
+  size_in_gb        = 8
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+resource ""aws_lightsail_disk"" ""test2"" {
+  name              = ""test-disk-2""
+  size_in_gb        = 8
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+resource ""aws_lightsail_instance"" ""test"" {
+  name              = ""test-instance""
+  availability_zone = data.aws_availability_zones.available.names[0]
+  blueprint_id      = ""amazon_linux_2""
+  bundle_id         = ""nano_1_0""
+}
+
+resource ""aws_lightsail_disk_attachment"" ""test1"" {
+  disk_name     = aws_lightsail_disk.test1.name
+  instance_name = aws_lightsail_instance.test.name
+  disk_path     = ""/dev/xvdf""
+}
+
+resource ""aws_lightsail_disk_attachment"" ""test2"" {
+  disk_name     = aws_lightsail_disk.test2.name
+  instance_name = aws_lightsail_instance.test.name
+  disk_path     = ""/dev/xvdg""
+}","have multiple aws_lightsail_disk resource
+    with name
+    with size_in_gb
+    with availability_zone
+
+have multiple aws_lightsail_disk_attachment
+    with disk_name
+    with instance_name
+    with disk_path
+
+have one ""aws_lightsail_instance"" resource
+    with ""name"" argument
+    with ""availability_zone"" argument
+    with ""blueprint_id"" argument
+    with ""bundle_id"" argument","I'll help you create a Terraform configuration for a Lightsail instance with multiple attached disks. Based on the examples provided, I'll create a solution that combines multiple disk attachments.
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.0""
+    }
+  }
+}
+
+provider ""aws"" {
+  region = ""us-east-1""
+}
+
+# Get available AZs
+data ""aws_availability_zones"" ""available"" {
+  state = ""available""
+
+  filter {
+    name   = ""opt-in-status""
+    values = [""opt-in-not-required""]
+  }
+}
+
+# Create Lightsail instance
+resource ""aws_lightsail_instance"" ""main"" {
+  name              = ""multi-disk-instance""
+  availability_zone = data.aws_availability_zones.available.names[0]
+  blueprint_id      = ""amazon_linux_2""
+  bundle_id         = ""nano_1_0""
+}
+
+# Create first disk
+resource ""aws_lightsail_disk"" ""disk1"" {
+  name              = ""disk-1""
+  size_in_gb        = 8
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+# Create second disk
+resource ""aws_lightsail_disk"" ""disk2"" {
+  name              = ""disk-2""
+  size_in_gb        = 16
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+# Attach first disk
+resource ""aws_lightsail_disk_attachment"" ""disk1_attachment"" {
+  disk_name     = aws_lightsail_disk.disk1.name
+  instance_name = aws_lightsail_instance.main.name
+  disk_path     = ""/dev/xvdf""
+}
+
+# Attach second disk
+resource ""aws_lightsail_disk_attachment"" ""disk2_attachment"" {
+  disk_name     = aws_lightsail_disk.disk2.name
+  instance_name = aws_lightsail_instance.main.name
+  disk_path     = ""/dev/xvdg""
+}
+```
+
+This configuration:
+1. Sets up the AWS provider
+2. Creates a Lightsail instance
+3. Creates two different disks with different sizes (8GB and 16GB)
+4. Attaches both disks to the instance with different disk paths
+5. Uses availability zones data source to ensure the resources are created in an available AZ
+
+The disks will be mounted at `/dev/xvdf` and `/dev/xvdg` respectively on the instance. Make sure to initialize and format the disks after they're attached to make them usable in the operating system.",,,,,,"I'll help you create a Terraform configuration for a Lightsail instance with multiple attached disks. Based on the examples provided, I'll create a solution that combines multiple disk attachments.
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.0""
+    }
+  }
+}
+
+provider ""aws"" {
+  region = ""us-east-1""
+}
+
+# Get available AZs
+data ""aws_availability_zones"" ""available"" {
+  state = ""available""
+
+  filter {
+    name   = ""opt-in-status""
+    values = [""opt-in-not-required""]
+  }
+}
+
+# Create Lightsail Instance
+resource ""aws_lightsail_instance"" ""main"" {
+  name              = ""multi-disk-instance""
+  availability_zone = data.aws_availability_zones.available.names[0]
+  blueprint_id      = ""amazon_linux_2""
+  bundle_id         = ""nano_1_0""
+}
+
+# Create first disk
+resource ""aws_lightsail_disk"" ""disk1"" {
+  name              = ""disk-1""
+  size_in_gb        = 8
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+# Create second disk
+resource ""aws_lightsail_disk"" ""disk2"" {
+  name              = ""disk-2""
+  size_in_gb        = 16
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+# Attach first disk
+resource ""aws_lightsail_disk_attachment"" ""disk1_attachment"" {
+  disk_name     = aws_lightsail_disk.disk1.name
+  instance_name = aws_lightsail_instance.main.name
+  disk_path     = ""/dev/xvdf""
+}
+
+# Attach second disk
+resource ""aws_lightsail_disk_attachment"" ""disk2_attachment"" {
+  disk_name     = aws_lightsail_disk.disk2.name
+  instance_name = aws_lightsail_instance.main.name
+  disk_path     = ""/dev/xvdg""
+}
+```
+
+This configuration:
+1. Sets up the AWS provider
+2. Creates a Lightsail instance
+3. Creates two separate disks of different sizes (8GB and 16GB)
+4. Attaches both disks to the instance with different disk paths
+5. Uses data source to get available AZs
+
+The disks will be mounted at `/dev/xvdf` and `/dev/xvdg` respectively. You can modify the disk sizes, names, and paths according to your needs.",,,,,,"I'll help you create a Terraform configuration for a Lightsail instance with multiple attached disks. I'll use the examples provided and adapt them for multiple disk attachments.
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.0""
+    }
+  }
+}
+
+provider ""aws"" {
+  region = ""us-east-1""
+}
+
+# Get available AZs
+data ""aws_availability_zones"" ""available"" {
+  state = ""available""
+
+  filter {
+    name   = ""opt-in-status""
+    values = [""opt-in-not-required""]
+  }
+}
+
+# Create Lightsail Instance
+resource ""aws_lightsail_instance"" ""main"" {
+  name              = ""multi-disk-instance""
+  availability_zone = data.aws_availability_zones.available.names[0]
+  blueprint_id      = ""amazon_linux_2""
+  bundle_id         = ""micro_2_0""
+}
+
+# Create first disk
+resource ""aws_lightsail_disk"" ""disk1"" {
+  name              = ""disk-1""
+  size_in_gb        = 8
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+# Create second disk
+resource ""aws_lightsail_disk"" ""disk2"" {
+  name              = ""disk-2""
+  size_in_gb        = 16
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+# Attach first disk
+resource ""aws_lightsail_disk_attachment"" ""disk1_attachment"" {
+  disk_name     = aws_lightsail_disk.disk1.name
+  instance_name = aws_lightsail_instance.main.name
+  disk_path     = ""/dev/xvdf""
+}
+
+# Attach second disk
+resource ""aws_lightsail_disk_attachment"" ""disk2_attachment"" {
+  disk_name     = aws_lightsail_disk.disk2.name
+  instance_name = aws_lightsail_instance.main.name
+  disk_path     = ""/dev/xvdg""
+}
+```
+
+This configuration:
+1. Sets up the AWS provider
+2. Creates a Lightsail instance
+3. Creates two disks of different sizes (8GB and 16GB)
+4. Attaches both disks to the instance with different disk paths
+5. Uses data source to get available AZs
+
+The disks will be mounted at `/dev/xvdf` and `/dev/xvdg` respectively. You can modify the disk sizes, names, and paths according to your needs.",,,,,
+"aws_network_acl, aws_vpc",configures AWS as the cloud provider. It defines an AWS VPC with a specific CIDR block of 10.0.0.0/16 and a network ACL linked to this VPC that allows specific TCP traffic for both ingress (10.3.0.0/18 on port 80) and egress (10.3.0.0/18 on port 443) rules.,"package terraform.validation
+
+# Set default validation states
+default is_valid_network_acl = false
+
+# Validate aws_network_acl resources
+is_valid_network_acl {
+        some i
+        network_acl := input.configuration.root_module.resources[i]
+        network_acl.type == ""aws_network_acl""
+        network_acl.name == ""example"" # Assuming the resource name is ""example""
+
+        # Validate linked VPC
+        network_acl.expressions.vpc_id.references[0] == ""aws_vpc.example.id""
+        
+        # Check ingress rules for allowing TCP traffic on port 80 from CIDR ""10.3.0.0/18""
+        ingress := network_acl.expressions.ingress
+        ingress.constant_value[0].protocol == ""tcp""
+        ingress.constant_value[0].rule_no == 100
+        ingress.constant_value[0].action == ""allow""
+        ingress.constant_value[0].cidr_block == ""10.3.0.0/18""
+        ingress.constant_value[0].from_port == 80
+        ingress.constant_value[0].to_port == 80
+
+        # Check egress rules for allowing TCP traffic on port 443 to CIDR ""10.3.0.0/18""
+        egress := network_acl.expressions.egress
+        egress.constant_value[0].protocol == ""tcp""
+        egress.constant_value[0].rule_no == 200
+        egress.constant_value[0].action == ""allow""
+        egress.constant_value[0].cidr_block == ""10.3.0.0/18""
+        egress.constant_value[0].from_port == 443
+        egress.constant_value[0].to_port == 443
+}
+",3,"terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+# Define the provider block for AWS
+provider ""aws"" {
+  region = ""us-east-2"" # Set your desired AWS region
+}
+
+resource ""aws_vpc"" ""example"" {
+  cidr_block = ""10.0.0.0/16""
+}
+
+resource ""aws_network_acl"" ""example"" {
+  vpc_id = aws_vpc.example.id
+
+  egress {
+    protocol   = ""tcp""
+    rule_no    = 200
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 443
+    to_port    = 443
+  }
+
+  ingress {
+    protocol   = ""tcp""
+    rule_no    = 100
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 80
+    to_port    = 80
+  }
+}","Has one ""aws_vpc"" resource:
+with a specified ""cidr_block"" of ""10.0.0.0/16""
+
+Has one ""aws_network_acl"" resource:
+linked to the ""aws_vpc"" resource
+with ingress rules allowing TCP traffic from ""10.3.0.0/18"" on port 80
+with egress rules allowing TCP traffic to ""10.3.0.0/18"" on port 443","Based on your requirements, I'll help you create a Terraform configuration that sets up an AWS VPC with a network ACL having specific ingress and egress rules. Here's the solution:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+
+provider ""aws"" {
+  region = ""us-east-2""
+}
+
+resource ""aws_vpc"" ""main"" {
+  cidr_block = ""10.0.0.0/16""
+  
+  tags = {
+    Name = ""main-vpc""
+  }
+}
+
+resource ""aws_network_acl"" ""main"" {
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    protocol   = ""tcp""
+    rule_no    = 100
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 80
+    to_port    = 80
+  }
+
+  egress {
+    protocol   = ""tcp""
+    rule_no    = 200
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 443
+    to_port    = 443
+  }
+
+  tags = {
+    Name = ""main-nacl""
+  }
+}
+```
+
+This configuration:
+1. Sets up AWS as the provider with the required provider block
+2. Creates a VPC with CIDR block 10.0.0.0/16
+3. Creates a Network ACL associated with the VPC that:
+   - Allows inbound TCP traffic from 10.3.0.0/18 on port 80
+   - Allows outbound TCP traffic to 10.3.0.0/18 on port 443
+4. Includes appropriate tags for better resource identification
+
+The configuration matches your requirements exactly and includes all necessary components with proper syntax.",,,,,,"I'll help you create a Terraform configuration that matches your requirements. This will set up an AWS VPC with a CIDR block of 10.0.0.0/16 and configure a network ACL with the specified ingress and egress rules.
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+
+provider ""aws"" {
+  region = ""us-east-2""
+}
+
+resource ""aws_vpc"" ""example"" {
+  cidr_block = ""10.0.0.0/16""
+  
+  tags = {
+    Name = ""example-vpc""
+  }
+}
+
+resource ""aws_network_acl"" ""example"" {
+  vpc_id = aws_vpc.example.id
+
+  ingress {
+    protocol   = ""tcp""
+    rule_no    = 100
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 80
+    to_port    = 80
+  }
+
+  egress {
+    protocol   = ""tcp""
+    rule_no    = 200
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 443
+    to_port    = 443
+  }
+
+  tags = {
+    Name = ""example-nacl""
+  }
+}
+```
+
+This configuration:
+1. Sets up the AWS provider with required version constraints
+2. Creates a VPC with CIDR block 10.0.0.0/16
+3. Creates a Network ACL associated with the VPC that:
+   - Allows inbound TCP traffic from 10.3.0.0/18 on port 80
+   - Allows outbound TCP traffic to 10.3.0.0/18 on port 443
+4. Includes appropriate tags for better resource identification
+
+The configuration matches your requirements exactly and includes proper resource tagging for better AWS resource management.",,,,,,"Based on your requirements, I'll help you create a Terraform configuration that sets up an AWS VPC with a network ACL having specific ingress and egress rules. Here's the solution:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+
+provider ""aws"" {
+  region = ""us-east-2""
+}
+
+resource ""aws_vpc"" ""example"" {
+  cidr_block = ""10.0.0.0/16""
+  
+  tags = {
+    Name = ""example-vpc""
+  }
+}
+
+resource ""aws_network_acl"" ""example"" {
+  vpc_id = aws_vpc.example.id
+
+  ingress {
+    protocol   = ""tcp""
+    rule_no    = 100
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 80
+    to_port    = 80
+  }
+
+  egress {
+    protocol   = ""tcp""
+    rule_no    = 200
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 443
+    to_port    = 443
+  }
+
+  tags = {
+    Name = ""example-nacl""
+  }
+}
+```
+
+This configuration:
+1. Sets up AWS as the provider with the required provider configuration
+2. Creates a VPC with CIDR block 10.0.0.0/16
+3. Creates a Network ACL associated with the VPC that:
+   - Allows inbound TCP traffic from 10.3.0.0/18 on port 80
+   - Allows outbound TCP traffic to 10.3.0.0/18 on port 443
+4. Includes appropriate tags for better resource identification
+
+All the rules are properly configured with specific protocols, ports, and CIDR blocks as requested.",,,,,
+"aws_network_acl, aws_vpc",configures AWS as the cloud provider. It defines an AWS VPC with a specific CIDR block of 10.0.0.0/16 and a network ACL linked to this VPC that allows specific TCP traffic for both ingress and egress rules.,"package terraform.validation
+
+# Set default validation states
+default is_valid_network_acl = false
+
+# Validate aws_network_acl resources
+is_valid_network_acl {
+        some i
+        network_acl := input.configuration.root_module.resources[i]
+        network_acl.type == ""aws_network_acl""
+        network_acl.name == ""example"" # Assuming the resource name is ""example""
+
+        # Validate linked VPC
+        network_acl.expressions.vpc_id.references[0] == ""aws_vpc.example.id""
+        
+        # Check ingress rules for allowing TCP traffic on port 80 from CIDR ""10.3.0.0/18""
+        ingress := network_acl.expressions.ingress
+        ingress.constant_value[0].protocol == ""tcp""
+        ingress.constant_value[0].rule_no == 100
+        ingress.constant_value[0].action == ""allow""
+       
+
+        # Check egress rules for allowing TCP traffic on port 443 to CIDR ""10.3.0.0/18""
+        egress := network_acl.expressions.egress
+        egress.constant_value[0].protocol == ""tcp""
+        egress.constant_value[0].rule_no == 200
+        egress.constant_value[0].action == ""allow""
+}
+",3,"terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+# Define the provider block for AWS
+provider ""aws"" {
+  region = ""us-east-2"" # Set your desired AWS region
+}
+
+resource ""aws_vpc"" ""example"" {
+  cidr_block = ""10.0.0.0/16""
+}
+
+resource ""aws_network_acl"" ""example"" {
+  vpc_id = aws_vpc.example.id
+
+  egress {
+    protocol   = ""tcp""
+    rule_no    = 200
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 443
+    to_port    = 443
+  }
+
+  ingress {
+    protocol   = ""tcp""
+    rule_no    = 100
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 80
+    to_port    = 80
+  }
+}","Has one ""aws_vpc"" resource:
+with a specified ""cidr_block"" of ""10.0.0.0/16""
+
+Has one ""aws_network_acl"" resource:
+linked to the ""aws_vpc"" resource
+with ingress rules allowing TCP traffic
+with egress rules allowing TCP traffic","Based on the provided examples and the current question, I'll help you create a Terraform configuration that sets up an AWS VPC with a network ACL having specific TCP traffic rules. Here's the solution:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+
+provider ""aws"" {
+  region = ""us-east-2""
+}
+
+resource ""aws_vpc"" ""example"" {
+  cidr_block = ""10.0.0.0/16""
+}
+
+resource ""aws_network_acl"" ""example"" {
+  vpc_id = aws_vpc.example.id
+
+  egress {
+    protocol   = ""tcp""
+    rule_no    = 200
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 443
+    to_port    = 443
+  }
+
+  ingress {
+    protocol   = ""tcp""
+    rule_no    = 100
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 80
+    to_port    = 80
+  }
+}
+```
+
+This configuration:
+1. Sets up the AWS provider and required version constraints
+2. Creates a VPC with CIDR block 10.0.0.0/16
+3. Creates a network ACL associated with the VPC that:
+   - Allows inbound TCP traffic on port 80 from 10.3.0.0/18
+   - Allows outbound TCP traffic on port 443 to 10.3.0.0/18
+
+Each resource is properly configured with the necessary parameters and follows AWS best practices for network security.",,,,,,"Based on the provided examples and the current question, I'll help you create a Terraform configuration that sets up an AWS VPC with a network ACL that manages TCP traffic. Here's the solution:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+
+provider ""aws"" {
+  region = ""us-east-2""
+}
+
+resource ""aws_vpc"" ""example"" {
+  cidr_block = ""10.0.0.0/16""
+}
+
+resource ""aws_network_acl"" ""example"" {
+  vpc_id = aws_vpc.example.id
+
+  egress {
+    protocol   = ""tcp""
+    rule_no    = 200
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 443
+    to_port    = 443
+  }
+
+  ingress {
+    protocol   = ""tcp""
+    rule_no    = 100
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 80
+    to_port    = 80
+  }
+
+  tags = {
+    Name = ""example-network-acl""
+  }
+}
+```
+
+This configuration:
+1. Sets up the AWS provider with required version constraints
+2. Creates a VPC with CIDR block 10.0.0.0/16
+3. Creates a network ACL associated with the VPC that:
+   - Allows inbound TCP traffic on port 80 from 10.3.0.0/18
+   - Allows outbound TCP traffic on port 443 to 10.3.0.0/18
+4. Includes proper tagging for resource management
+
+The configuration follows AWS best practices and includes all necessary components while maintaining proper syntax and structure.",,,,,,"Based on the provided examples and the current question, I'll help you create a Terraform configuration that sets up an AWS VPC with a network ACL that manages TCP traffic. Here's the solution:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+
+provider ""aws"" {
+  region = ""us-east-2""
+}
+
+resource ""aws_vpc"" ""example"" {
+  cidr_block = ""10.0.0.0/16""
+}
+
+resource ""aws_network_acl"" ""example"" {
+  vpc_id = aws_vpc.example.id
+
+  egress {
+    protocol   = ""tcp""
+    rule_no    = 200
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 443
+    to_port    = 443
+  }
+
+  ingress {
+    protocol   = ""tcp""
+    rule_no    = 100
+    action     = ""allow""
+    cidr_block = ""10.3.0.0/18""
+    from_port  = 80
+    to_port    = 80
+  }
+}
+```
+
+This configuration:
+1. Sets up the AWS provider with required version constraints
+2. Creates a VPC with CIDR block 10.0.0.0/16
+3. Creates a network ACL associated with the VPC that:
+   - Allows inbound TCP traffic on port 80 from 10.3.0.0/18
+   - Allows outbound TCP traffic on port 443 to 10.3.0.0/18
+4. Uses proper rule numbers (100 for ingress, 200 for egress)
+5. Associates all components correctly using resource references",,,,,
+aws_nat_gateway,creates a NAT Gateway associated with a specified subnet and Elastic IP allocation ID. The NAT Gateway is configured for public connectivity.,"package terraform.validation
+
+# Set default validation state
+default is_valid_nat_gateway = false
+
+# Validate aws_nat_gateway resource
+is_valid_nat_gateway {
+        some i
+        resource := input.configuration.root_module.resources[i]
+        resource.type == ""aws_nat_gateway""
+
+        # Ensure it is associated with a specified subnet
+        resource.expressions.subnet_id != null
+
+        # Ensure it uses a specific Elastic IP allocation ID
+        resource.expressions.allocation_id != null
+}
+",2,"terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+# Define the provider block for AWS
+provider ""aws"" {
+  region = ""us-east-2"" # Set your desired AWS region
+}
+
+resource ""aws_nat_gateway"" ""pike"" {
+  subnet_id         = ""subnet-0562ef1d304b968f4""
+  allocation_id     = ""eipalloc-0047fa56c40637c3b""
+  connectivity_type = ""public""
+}","Has one ""aws_nat_gateway"" resource:
+Associated with a specified ""aws_subnet"" resource for hosting the NAT Gateway.
+Utilizes an ""Elastic IP allocation ID"" to provide the NAT Gateway with a public IP address.
+Configured for public connectivity, allowing resources within the private subnet to access the internet securely.","Based on the requirements, I'll help you create a Terraform configuration for an AWS NAT Gateway with public connectivity. Here's the solution:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+
+provider ""aws"" {
+  region = ""us-east-2""
+}
+
+resource ""aws_nat_gateway"" ""nat_gateway"" {
+  subnet_id         = ""subnet-0562ef1d304b968f4""
+  allocation_id     = ""eipalloc-0047fa56c40637c3b""
+  connectivity_type = ""public""
+}
+```
+
+This configuration:
+1. Sets up the required AWS provider
+2. Creates a NAT Gateway with:
+   - A specific subnet ID
+   - An allocated Elastic IP
+   - Public connectivity type
+3. Uses the latest compatible version of the AWS provider
+
+Note: Make sure to replace the subnet_id and allocation_id values with your actual subnet ID and Elastic IP allocation ID.",,,,,,"Based on your request, I'll help you create a NAT Gateway with public connectivity. Here's the Terraform configuration:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+
+provider ""aws"" {
+  region = ""us-east-2""
+}
+
+resource ""aws_nat_gateway"" ""example"" {
+  subnet_id         = ""subnet-0562ef1d304b968f4""
+  allocation_id     = ""eipalloc-0047fa56c40637c3b""
+  connectivity_type = ""public""
+}
+```
+
+This configuration:
+1. Sets up the required AWS provider
+2. Creates a NAT Gateway with:
+   - A specific subnet ID
+   - An Elastic IP allocation ID
+   - Public connectivity type
+   
+The NAT Gateway will be created in the specified subnet and will use the provided Elastic IP for outbound internet connectivity.",,,,,,"Based on your request, I'll help you create a Terraform configuration for a NAT Gateway with public connectivity. Here's the solution:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = ""hashicorp/aws""
+      version = ""~> 4.16""
+    }
+  }
+
+  required_version = "">= 1.2.0""
+}
+
+provider ""aws"" {
+  region = ""us-east-2""
+}
+
+resource ""aws_nat_gateway"" ""example"" {
+  subnet_id         = ""subnet-0562ef1d304b968f4""
+  allocation_id     = ""eipalloc-0047fa56c40637c3b""
+  connectivity_type = ""public""
+}
+```
+
+This configuration:
+1. Declares the required AWS provider
+2. Creates a NAT Gateway resource with:
+   - A specific subnet ID
+   - An Elastic IP allocation ID
+   - Public connectivity type
+3. Uses the AWS provider configured for the us-east-2 region
+
+Note: Make sure to replace the subnet_id and allocation_id values with your actual subnet and Elastic IP allocation IDs.",,,,,
