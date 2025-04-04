@@ -915,17 +915,9 @@ def eval_pipeline(result, policy_file, prompt, uuid_1):
         generate_terraform_plan_json("plan.json", plan_file, terraform_dir)
         tf_json_plan_filepath = os.path.join(terraform_dir, "plan.json")
 
-        logger.debug(tf_json_plan_filepath)
-        logger.debug(rego_policy_filepath)
+        
         # Print Rego policy contents
-        with open(policy_file, 'r') as f:
-            policy_content = f.read()
-            logger.debug(f"\n=== Rego Policy Contents ===\n{policy_content}\n===================")
-
-        # Print Terraform plan contents
-        with open(plan_file, 'r') as f:
-            plan_content = f.read()
-            logger.debug(f"\n=== Terraform Plan Contents ===\n{plan_content}\n===================")
+        
 
         # run OPA evaluation and capture the result
         opa_result, opa_error = OPA_Rego_evaluation(
