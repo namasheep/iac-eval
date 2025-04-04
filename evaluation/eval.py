@@ -958,6 +958,7 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
     logger.debug("Running terraform init")
     subprocess.run(["terraform", "init"], capture_output=True, text=True)
     logger.debug("Terraform init completed")
+    time.sleep(30)
     logger.debug("Running terraform plan")
     result = subprocess.run(["terraform", "plan", "-out", plan_file, "-no-color"], capture_output=True, text=True, timeout=300)
     """
