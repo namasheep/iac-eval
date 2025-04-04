@@ -946,6 +946,10 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
 
     result_returned = False
     # generate Terraform plan with the -no-color flag
+    subprocess.run(["rm", "-rf", ".terraform"], check=True)
+
+# Remove .terraform.lock.hcl file
+    subprocess.run(["rm", "-f", ".terraform.lock.hcl"], check=True)
 
     #print plan_file
     logger.debug(f"Plan file to be created: {plan_file}")
