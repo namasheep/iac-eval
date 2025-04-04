@@ -940,37 +940,28 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
     os.chdir(terraform_directory)
     # run init before plan
     
-
+    subprocess.run(["terraform", "init"], capture_output=True, text=True)
     # run 'terraform plan'
     # result = subprocess.run(["terraform", "plan"], capture_output=True, text=True)
 
     result_returned = False
     # generate Terraform plan with the -no-color flag
-    subprocess.run(["rm", "-rf", ".terraform"], check=True)
-
-# Remove .terraform.lock.hcl file
-    subprocess.run(["rm", "-f", ".terraform.lock.hcl"], check=True)
 
     #print plan_file
     logger.debug(f"Plan file to be created: {plan_file}")
     logger.debug(f"Current directory: {terraform_directory}")
     logger.debug(f"Prompt being processed: {prompt}")
     logger.debug("Running terraform init")
-    subprocess.run(["terraform", "init"], capture_output=True, text=True)
-    logger.debug("Terraform init completed")
-    time.sleep(30)
-    logger.debug("Running terraform plan")
-    result = subprocess.run(["terraform", "plan", "-out", plan_file, "-no-color"], capture_output=True, text=True, timeout=300)
-    """
+
     for i in range(2):  # try twice
         
-        time.sleep(50)
+        
         try:
             result = subprocess.run(
                 ["terraform", "plan", "-out", plan_file, "-no-color"],
                 capture_output=True,
                 text=True,
-                timeout = 300 # 5 minutes timeout (assume failed if timeout)
+                timeout = 600 # 5 minutes timeout (assume failed if timeout)
             )
             
             if "Inconsistent dependency lock file" in result.stderr:
@@ -984,7 +975,7 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
             logging.error(
                 'Error occurred for prompt "{}": {}'.format(prompt, e), exc_info=True
             )
-    """
+            
     logger.debug(f"TERRAFORM RESULT: {result}")
     # Return to parent directory
     os.chdir(cur_dir)
