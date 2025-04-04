@@ -939,45 +939,36 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
     # change to the Terraform directory
     os.chdir(terraform_directory)
     # run init before plan
-    
     subprocess.run(["terraform", "init"], capture_output=True, text=True)
+
     # run 'terraform plan'
     # result = subprocess.run(["terraform", "plan"], capture_output=True, text=True)
 
     result_returned = False
     # generate Terraform plan with the -no-color flag
-
-    #print plan_file
-    logger.debug(f"Plan file to be created: {plan_file}")
-    logger.debug(f"Current directory: {terraform_directory}")
-    logger.debug(f"Prompt being processed: {prompt}")
-
     for i in range(2):  # try twice
-        
-        
         try:
             result = subprocess.run(
                 ["terraform", "plan", "-out", plan_file, "-no-color"],
                 capture_output=True,
                 text=True,
-                timeout = 600 # 5 minutes timeout (assume failed if timeout)
+                timeout=100,  # 5 minutes timeout (assume failed if timeout)
             )
-            logger.debug(result.stderr)
-            
             if "Inconsistent dependency lock file" in result.stderr:
                 subprocess.run(["terraform", "init"], capture_output=True, text=True)
-                time.sleep(50)
+                time.sleep(10)
                 continue
+
+            result_returned = True
             break
         except Exception as e:
             logging.error(
                 'Error occurred for prompt "{}": {}'.format(prompt, e), exc_info=True
             )
 
-    logger.debug(f"TERRAFORM RESULT: {result}")
     # Return to parent directory
     os.chdir(cur_dir)
-    result_returned = (result.stdout != "" or result.stderr != "")
+
     if not result_returned:
         return "Plan timed-out. No output", "Plan timed-out. No error", False
 
