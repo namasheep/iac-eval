@@ -975,7 +975,7 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
     logger.debug(f"TERRAFORM RESULT: {result}")
     # Return to parent directory
     os.chdir(cur_dir)
-    result_returned = (result.stdout != "" or result.stdout != "")
+    result_returned = (result.stdout != "" or result.stderr != "")
     if not result_returned:
         return "Plan timed-out. No output", "Plan timed-out. No error", False
 
