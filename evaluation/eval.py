@@ -1038,35 +1038,6 @@ def OPA_Rego_evaluation(plan_file, policy_file):
 
     # check the exit code and return the result and error message
     # success = result.returncode == 0
-    # key_val = next(iter( json.loads(result.stdout)["result"][0]["expressions"][0]["value"].items() ))
-    # get the first key-value pair: https://stackoverflow.com/a/39292086/13336187
-    # key_val = key_val[1]
-    # print(key_val)
-    results = [
-        i[-1]
-        for i in dict_generator(
-            json.loads(result.stdout)["result"][0]["expressions"][0]["value"]
-        )
-    ]
-    # print(results)
-    # print(key_val)
-    success = False if False in results else True
-    opa_result = "Success" if success else "Failure"
-    opa_error = "No error"
-    if not success:
-        opa_error = "Rule violation found. OPA complete output logged here: " + str(
-            json.loads(result.stdout)
-        )
-    # print("OPA error: ", opa_error)
-    return opa_result, opa_error
-"""
-    except Exception as e:
-        opa_result = "OPA exception occurred."
-        opa_error = "OPA exception occurred: {}".format(e)
-        return opa_result, opa_error
-
-    # check the exit code and return the result and error message
-    # success = result.returncode == 0
     logger.info(result.returncode)
 
     if(result.stdout == "" or result):
@@ -1101,14 +1072,14 @@ def OPA_Rego_evaluation(plan_file, policy_file):
         print(f"Failed to parse JSON: {e}")
         failed = True
         results = []  # or however you want to handle this case
-        
+    """
     results = [
         i[-1]
         for i in dict_generator(
             json.loads(result.stdout)["result"][0]["expressions"][0]["value"]
         )
     ]
-    
+    """
     # print(results)
     # print(key_val)
     success = False if False in results else True
@@ -1122,7 +1093,6 @@ def OPA_Rego_evaluation(plan_file, policy_file):
         )
     # print("OPA error: ", opa_error)
     return opa_result, opa_error
-    """
 
 
 def generate_terraform_plan_json(
