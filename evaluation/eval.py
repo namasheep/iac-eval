@@ -951,7 +951,6 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
     logger.debug(f"Plan file to be created: {plan_file}")
     logger.debug(f"Current directory: {terraform_directory}")
     logger.debug(f"Prompt being processed: {prompt}")
-    logger.debug("Running terraform init")
 
     for i in range(2):  # try twice
         
@@ -963,19 +962,18 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
                 text=True,
                 timeout = 600 # 5 minutes timeout (assume failed if timeout)
             )
+            logger.debug(result.stderr)
             
             if "Inconsistent dependency lock file" in result.stderr:
                 subprocess.run(["terraform", "init"], capture_output=True, text=True)
                 time.sleep(50)
                 continue
-
-            
             break
         except Exception as e:
             logging.error(
                 'Error occurred for prompt "{}": {}'.format(prompt, e), exc_info=True
             )
-            
+
     logger.debug(f"TERRAFORM RESULT: {result}")
     # Return to parent directory
     os.chdir(cur_dir)
