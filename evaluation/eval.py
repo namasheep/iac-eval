@@ -933,6 +933,7 @@ def eval_pipeline(result, policy_file, prompt, uuid_1):
     return plan_result
 
 
+
 def run_terraform_plan(terraform_directory, plan_file, prompt):
     cur_dir = os.getcwd()
     # change to the Terraform directory
@@ -959,12 +960,13 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
                 text=True,
                 timeout = 600 # 5 minutes timeout (assume failed if timeout)
             )
+            result_returned = True
             if "Inconsistent dependency lock file" in result.stderr:
                 subprocess.run(["terraform", "init"], capture_output=True, text=True)
                 time.sleep(10)
                 continue
 
-            result_returned = True
+            
             break
         except Exception as e:
             logging.error(
