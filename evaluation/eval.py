@@ -966,13 +966,13 @@ def run_terraform_plan(terraform_directory, plan_file, prompt):
                 time.sleep(10)
                 continue
 
-            result_returned = result.returncode == 0
+            
             break
         except Exception as e:
             logging.error(
                 'Error occurred for prompt "{}": {}'.format(prompt, e), exc_info=True
             )
-
+    logger.debug("TERRAFORM RESULT:" + result)
     # Return to parent directory
     os.chdir(cur_dir)
 
